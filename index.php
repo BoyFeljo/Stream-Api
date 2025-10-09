@@ -1,3 +1,17 @@
+<?php
+// URL da tua API JSON
+$apiUrl = "https://stream-lite-eta.vercel.app/";
+
+// Tenta obter o conteúdo JSON
+$response = @file_get_contents($apiUrl);
+
+if ($response === FALSE) {
+  $channels = [];
+} else {
+  $channels = json_decode($response, true);
+  if ($channels === NULL) $channels = [];
+}
+?>
 <!DOCTYPE html>
 <html lang="pt">
 <head>
@@ -75,60 +89,38 @@
     <h1>📺 Stream+ TV</h1>
     <p>Assista canais ao vivo, organizado por categoria</p>
   </header>
-  
-  <div id="content"></div>
+
+  <div id="content">
+    <?php if (empty($channels)): ?>
+      <p style="color:red;text-align:center;">❌ Falha ao carregar o JSON</p>
+    <?php else: ?>
+      <?php
+        // Agrupar canais por categoria
+        $groups = [];
+        foreach ($channels as $ch) {
+          $group = $ch['group'] ?? 'Outros';
+          if (!isset($groups[$group])) $groups[$group] = [];
+          $groups[$group][] = $ch;
+        }
+
+        // Exibir categorias e canais
+        foreach ($groups as $group => $items):
+      ?>
+        <div class="category">
+          <h2><?= htmlspecialchars($group) ?></h2>
+          <div class="grid">
+            <?php foreach ($items as $ch): ?>
+              <div class="card" onclick="window.open('<?= htmlspecialchars($ch['url']) ?>', '_blank')">
+                <img src="<?= htmlspecialchars($ch['logo'] ?: 'https://via.placeholder.com/150') ?>" alt="<?= htmlspecialchars($ch['name']) ?>">
+                <h3><?= htmlspecialchars($ch['name']) ?></h3>
+              </div>
+            <?php endforeach; ?>
+          </div>
+        </div>
+      <?php endforeach; ?>
+    <?php endif; ?>
+  </div>
 
   <footer>Feito com 💖 por <span>Boy Feljo</span></footer>
-
-  <script>
-    const apiUrl = "https://stream-lite-eta.vercel.app/"; // teu link JSON
-    
-    async function loadChannels() {
-      try {
-        const res = await fetch(apiUrl);
-        const data = await res.json();
-        renderChannels(data);
-      } catch (err) {
-        document.getElementById("content").innerHTML = "<p style='color:red;text-align:center;'>❌ Falha ao carregar o JSON</p>";
-        console.error("Erro ao carregar JSON:", err);
-      }
-    }
-
-    function renderChannels(channels) {
-      const container = document.getElementById("content");
-      container.innerHTML = "";
-
-      // Agrupar por categoria
-      const groups = {};
-      channels.forEach(ch => {
-        if (!groups[ch.group]) groups[ch.group] = [];
-        groups[ch.group].push(ch);
-      });
-
-      // Renderizar categorias
-      for (const group in groups) {
-        const section = document.createElement("div");
-        section.className = "category";
-        section.innerHTML = `<h2>${group}</h2>`;
-        
-        const grid = document.createElement("div");
-        grid.className = "grid";
-        groups[group].forEach(ch => {
-          const card = document.createElement("div");
-          card.className = "card";
-          card.innerHTML = `
-            <img src="${ch.logo || 'https://via.placeholder.com/150'}" alt="${ch.name}">
-            <h3>${ch.name}</h3>
-          `;
-          card.onclick = () => window.open(ch.url, "_blank");
-          grid.appendChild(card);
-        });
-        section.appendChild(grid);
-        container.appendChild(section);
-      }
-    }
-
-    loadChannels();
-  </script>
 </body>
 </html>
