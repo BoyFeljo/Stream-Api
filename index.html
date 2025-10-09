@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Stream Lite</title>
+
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
 
@@ -11,11 +12,11 @@
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      font-family: 'Poppins', sans-serif;
+      font-family: "Poppins", sans-serif;
     }
 
     body {
-      background: #0c0c0c;
+      background-color: #0b0b0b;
       color: #fff;
       min-height: 100vh;
       display: flex;
@@ -23,59 +24,65 @@
     }
 
     header {
-      background: linear-gradient(90deg, #ff0055, #ff6a00);
-      padding: 20px;
       text-align: center;
-      font-size: 1.8em;
+      padding: 18px;
+      font-size: 1.6em;
       font-weight: 600;
+      background: linear-gradient(90deg, #ff0055, #ff6a00);
+      box-shadow: 0 0 20px rgba(255, 0, 85, 0.3);
       letter-spacing: 1px;
-      box-shadow: 0 0 15px rgba(255, 0, 85, 0.5);
     }
 
     nav {
       display: flex;
       overflow-x: auto;
-      background: #141414;
-      padding: 12px;
       gap: 10px;
+      background: #151515;
+      padding: 12px;
       border-bottom: 1px solid #222;
       scrollbar-width: none;
     }
-    nav::-webkit-scrollbar { display: none; }
+
+    nav::-webkit-scrollbar {
+      display: none;
+    }
 
     nav button {
       background: #1f1f1f;
       border: none;
-      color: #fff;
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 0.9em;
+      color: #ccc;
+      padding: 8px 15px;
+      border-radius: 25px;
       cursor: pointer;
-      transition: 0.3s;
+      transition: all 0.3s;
       white-space: nowrap;
+      font-size: 0.9em;
     }
 
-    nav button:hover, nav button.active {
+    nav button.active, nav button:hover {
       background: linear-gradient(90deg, #ff0055, #ff6a00);
-      box-shadow: 0 0 10px rgba(255, 0, 85, 0.4);
+      color: #fff;
+      box-shadow: 0 0 15px rgba(255, 0, 85, 0.3);
     }
 
     main {
+      flex: 1;
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 15px;
       padding: 20px;
-      flex: 1;
+      background: #0e0e0e;
+      animation: fadeIn 0.6s ease;
     }
 
     .channel {
-      background: #151515;
+      background: #161616;
       border-radius: 16px;
       overflow: hidden;
-      text-align: center;
       cursor: pointer;
       transition: all 0.3s ease;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 0 10px rgba(0,0,0,0.4);
+      text-align: center;
     }
 
     .channel:hover {
@@ -85,18 +92,18 @@
 
     .channel img {
       width: 100%;
-      height: 120px;
+      height: 110px;
       object-fit: cover;
       border-bottom: 2px solid #222;
     }
 
     .channel p {
-      padding: 10px;
-      font-size: 0.9em;
+      padding: 8px;
+      font-size: 0.85em;
       color: #ddd;
     }
 
-    /* Player Modal */
+    /* Modal Player */
     .modal {
       display: none;
       position: fixed;
@@ -104,44 +111,34 @@
       background: rgba(0,0,0,0.9);
       justify-content: center;
       align-items: center;
+      z-index: 1000;
       animation: fadeIn 0.3s ease;
-      z-index: 999;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
     }
 
     .modal-content {
       position: relative;
       width: 90%;
-      max-width: 900px;
+      max-width: 850px;
       background: #000;
-      border-radius: 12px;
+      border-radius: 10px;
       overflow: hidden;
-      box-shadow: 0 0 20px rgba(255, 0, 85, 0.4);
+      box-shadow: 0 0 25px rgba(255, 0, 85, 0.4);
       animation: pop 0.3s ease;
-    }
-
-    @keyframes pop {
-      from { transform: scale(0.8); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
     }
 
     .modal iframe {
       width: 100%;
-      height: 500px;
+      height: 480px;
       border: none;
     }
 
     .close {
       position: absolute;
-      top: 10px;
-      right: 15px;
+      top: 8px;
+      right: 12px;
+      color: #fff;
       font-size: 28px;
       cursor: pointer;
-      color: #fff;
       transition: 0.3s;
     }
 
@@ -150,11 +147,11 @@
     }
 
     footer {
-      text-align: center;
-      padding: 15px;
       background: #141414;
-      color: #ccc;
-      font-size: 0.85em;
+      text-align: center;
+      padding: 12px;
+      color: #aaa;
+      font-size: 0.9em;
       border-top: 1px solid #222;
     }
 
@@ -162,28 +159,26 @@
       color: #ff0055;
     }
 
-    /* Scroll Animation */
-    .channel {
-      opacity: 0;
-      transform: translateY(20px);
-      animation: fadeUp 0.5s forwards;
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
 
-    @keyframes fadeUp {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+    @keyframes pop {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
     }
-
   </style>
 </head>
 <body>
+
   <header>📺 Stream Lite</header>
 
   <nav id="categories"></nav>
+
   <main id="channels"></main>
 
+  <!-- Player Modal -->
   <div id="playerModal" class="modal">
     <div class="modal-content">
       <span class="close">&times;</span>
@@ -206,15 +201,13 @@
         renderChannels();
       } catch (e) {
         console.error("Erro ao carregar canais:", e);
-        document.getElementById("channels").innerHTML =
-          "<p style='text-align:center;'>Erro ao carregar canais 😢</p>";
+        document.getElementById("channels").innerHTML = "<p style='text-align:center;'>Erro ao carregar canais 😢</p>";
       }
     }
 
     function renderCategories() {
       const nav = document.getElementById("categories");
       const groups = ["Todos", ...new Set(channels.map(ch => ch.group))];
-
       nav.innerHTML = "";
       groups.forEach(g => {
         const btn = document.createElement("button");
@@ -234,10 +227,9 @@
       const filtered = currentGroup === "Todos" ? channels : channels.filter(ch => ch.group === currentGroup);
 
       main.innerHTML = "";
-      filtered.forEach((ch, i) => {
+      filtered.forEach(ch => {
         const div = document.createElement("div");
         div.className = "channel";
-        div.style.animationDelay = (i * 0.05) + "s";
         div.innerHTML = `
           <img src="${ch.logo || 'https://via.placeholder.com/200x120?text=Sem+Logo'}" alt="${ch.name}">
           <p>${ch.name}</p>
@@ -255,7 +247,8 @@
     }
 
     document.querySelector(".close").onclick = () => {
-      document.getElementById("playerModal").style.display = "none";
+      const modal = document.getElementById("playerModal");
+      modal.style.display = "none";
       document.getElementById("playerFrame").src = "";
     };
 
@@ -269,5 +262,6 @@
 
     fetchChannels();
   </script>
+
 </body>
 </html>
