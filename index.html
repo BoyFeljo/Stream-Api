@@ -1,267 +1,134 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Stream Lite</title>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stream+ TV - Canais Online</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: "Poppins", sans-serif;
-    }
-
+    * {margin:0;padding:0;box-sizing:border-box;font-family:"Poppins",sans-serif;}
     body {
-      background-color: #0b0b0b;
+      background: radial-gradient(circle at top, #0f0f0f, #000);
       color: #fff;
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+      padding: 20px;
     }
-
     header {
       text-align: center;
-      padding: 18px;
-      font-size: 1.6em;
-      font-weight: 600;
-      background: linear-gradient(90deg, #ff0055, #ff6a00);
-      box-shadow: 0 0 20px rgba(255, 0, 85, 0.3);
-      letter-spacing: 1px;
+      margin-bottom: 20px;
     }
-
-    nav {
-      display: flex;
-      overflow-x: auto;
-      gap: 10px;
-      background: #151515;
-      padding: 12px;
-      border-bottom: 1px solid #222;
-      scrollbar-width: none;
+    header h1 {
+      font-size: 2rem;
+      background: linear-gradient(90deg, #ff004c, #ffa500);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
-
-    nav::-webkit-scrollbar {
-      display: none;
+    .category {
+      margin: 30px 0;
     }
-
-    nav button {
-      background: #1f1f1f;
-      border: none;
-      color: #ccc;
-      padding: 8px 15px;
-      border-radius: 25px;
-      cursor: pointer;
-      transition: all 0.3s;
-      white-space: nowrap;
-      font-size: 0.9em;
+    .category h2 {
+      font-size: 1.4rem;
+      margin-bottom: 10px;
+      color: #ffcc00;
+      border-left: 4px solid #ff004c;
+      padding-left: 10px;
     }
-
-    nav button.active, nav button:hover {
-      background: linear-gradient(90deg, #ff0055, #ff6a00);
-      color: #fff;
-      box-shadow: 0 0 15px rgba(255, 0, 85, 0.3);
-    }
-
-    main {
-      flex: 1;
+    .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
       gap: 15px;
-      padding: 20px;
-      background: #0e0e0e;
-      animation: fadeIn 0.6s ease;
     }
-
-    .channel {
-      background: #161616;
-      border-radius: 16px;
+    .card {
+      background: rgba(255,255,255,0.05);
+      border-radius: 15px;
       overflow: hidden;
-      cursor: pointer;
       transition: all 0.3s ease;
-      box-shadow: 0 0 10px rgba(0,0,0,0.4);
-      text-align: center;
-    }
-
-    .channel:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 20px rgba(255, 0, 85, 0.3);
-    }
-
-    .channel img {
-      width: 100%;
-      height: 110px;
-      object-fit: cover;
-      border-bottom: 2px solid #222;
-    }
-
-    .channel p {
-      padding: 8px;
-      font-size: 0.85em;
-      color: #ddd;
-    }
-
-    /* Modal Player */
-    .modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.9);
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-      animation: fadeIn 0.3s ease;
-    }
-
-    .modal-content {
-      position: relative;
-      width: 90%;
-      max-width: 850px;
-      background: #000;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 0 25px rgba(255, 0, 85, 0.4);
-      animation: pop 0.3s ease;
-    }
-
-    .modal iframe {
-      width: 100%;
-      height: 480px;
-      border: none;
-    }
-
-    .close {
-      position: absolute;
-      top: 8px;
-      right: 12px;
-      color: #fff;
-      font-size: 28px;
       cursor: pointer;
-      transition: 0.3s;
+      box-shadow: 0 0 10px rgba(255,255,255,0.1);
     }
-
-    .close:hover {
-      color: #ff0055;
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 0 15px rgba(255,255,255,0.3);
     }
-
-    footer {
-      background: #141414;
+    .card img {
+      width: 100%;
+      height: 100px;
+      object-fit: cover;
+    }
+    .card h3 {
+      font-size: 0.9rem;
+      padding: 10px;
       text-align: center;
-      padding: 12px;
-      color: #aaa;
-      font-size: 0.9em;
-      border-top: 1px solid #222;
     }
-
-    footer b {
-      color: #ff0055;
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 0.8rem;
+      color: #888;
     }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    @keyframes pop {
-      from { transform: scale(0.8); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
+    footer span {
+      color: #ff004c;
     }
   </style>
 </head>
 <body>
+  <header>
+    <h1>📺 Stream+ TV</h1>
+    <p>Assista canais ao vivo, organizado por categoria</p>
+  </header>
+  
+  <div id="content"></div>
 
-  <header>📺 Stream Lite</header>
-
-  <nav id="categories"></nav>
-
-  <main id="channels"></main>
-
-  <!-- Player Modal -->
-  <div id="playerModal" class="modal">
-    <div class="modal-content">
-      <span class="close">&times;</span>
-      <iframe id="playerFrame" allowfullscreen></iframe>
-    </div>
-  </div>
-
-  <footer>Feito com ❤️ por <b>Boy Feljo</b></footer>
+  <footer>Feito com 💖 por <span>Boy Feljo</span></footer>
 
   <script>
-    const apiUrl = "https://stream-lite-eta.vercel.app/";
-    let channels = [];
-    let currentGroup = "Todos";
-
-    async function fetchChannels() {
+    const apiUrl = "https://stream-lite-eta.vercel.app/"; // teu link JSON
+    
+    async function loadChannels() {
       try {
         const res = await fetch(apiUrl);
-        channels = await res.json();
-        renderCategories();
-        renderChannels();
-      } catch (e) {
-        console.error("Erro ao carregar canais:", e);
-        document.getElementById("channels").innerHTML = "<p style='text-align:center;'>Erro ao carregar canais 😢</p>";
+        const data = await res.json();
+        renderChannels(data);
+      } catch (err) {
+        document.getElementById("content").innerHTML = "<p style='color:red;text-align:center;'>❌ Falha ao carregar o JSON</p>";
+        console.error("Erro ao carregar JSON:", err);
       }
     }
 
-    function renderCategories() {
-      const nav = document.getElementById("categories");
-      const groups = ["Todos", ...new Set(channels.map(ch => ch.group))];
-      nav.innerHTML = "";
-      groups.forEach(g => {
-        const btn = document.createElement("button");
-        btn.textContent = g;
-        btn.className = g === currentGroup ? "active" : "";
-        btn.onclick = () => {
-          currentGroup = g;
-          renderChannels();
-          renderCategories();
-        };
-        nav.appendChild(btn);
+    function renderChannels(channels) {
+      const container = document.getElementById("content");
+      container.innerHTML = "";
+
+      // Agrupar por categoria
+      const groups = {};
+      channels.forEach(ch => {
+        if (!groups[ch.group]) groups[ch.group] = [];
+        groups[ch.group].push(ch);
       });
-    }
 
-    function renderChannels() {
-      const main = document.getElementById("channels");
-      const filtered = currentGroup === "Todos" ? channels : channels.filter(ch => ch.group === currentGroup);
-
-      main.innerHTML = "";
-      filtered.forEach(ch => {
-        const div = document.createElement("div");
-        div.className = "channel";
-        div.innerHTML = `
-          <img src="${ch.logo || 'https://via.placeholder.com/200x120?text=Sem+Logo'}" alt="${ch.name}">
-          <p>${ch.name}</p>
-        `;
-        div.onclick = () => openPlayer(ch.url);
-        main.appendChild(div);
-      });
-    }
-
-    function openPlayer(url) {
-      const modal = document.getElementById("playerModal");
-      const frame = document.getElementById("playerFrame");
-      frame.src = url;
-      modal.style.display = "flex";
-    }
-
-    document.querySelector(".close").onclick = () => {
-      const modal = document.getElementById("playerModal");
-      modal.style.display = "none";
-      document.getElementById("playerFrame").src = "";
-    };
-
-    window.onclick = (e) => {
-      const modal = document.getElementById("playerModal");
-      if (e.target === modal) {
-        modal.style.display = "none";
-        document.getElementById("playerFrame").src = "";
+      // Renderizar categorias
+      for (const group in groups) {
+        const section = document.createElement("div");
+        section.className = "category";
+        section.innerHTML = `<h2>${group}</h2>`;
+        
+        const grid = document.createElement("div");
+        grid.className = "grid";
+        groups[group].forEach(ch => {
+          const card = document.createElement("div");
+          card.className = "card";
+          card.innerHTML = `
+            <img src="${ch.logo || 'https://via.placeholder.com/150'}" alt="${ch.name}">
+            <h3>${ch.name}</h3>
+          `;
+          card.onclick = () => window.open(ch.url, "_blank");
+          grid.appendChild(card);
+        });
+        section.appendChild(grid);
+        container.appendChild(section);
       }
-    };
+    }
 
-    fetchChannels();
+    loadChannels();
   </script>
-
 </body>
 </html>
