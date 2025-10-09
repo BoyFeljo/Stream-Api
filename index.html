@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stream API - Sua API de Streaming</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 40px 0;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card.canais {
+            border-top: 5px solid #4CAF50;
+        }
+
+        .card.em-breve {
+            border-top: 5px solid #FF9800;
+        }
+
+        .card h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        .card p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .endpoint {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            margin: 15px 0;
+        }
+
+        .endpoint code {
+            background: #e9ecef;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #e83e8c;
+            display: block;
+            word-break: break-all;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .status.online {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.soon {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .stat {
+            padding: 10px;
+        }
+
+        .stat .number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            display: block;
+        }
+
+        .stat .label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            padding: 20px;
+            margin-top: 40px;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 Stream API</h1>
+            <p>Sua API completa para conteúdo de streaming</p>
+        </div>
+
+        <div class="cards">
+            <div class="card canais">
+                <span class="status online">✅ ONLINE</span>
+                <h2>📺 Canais de TV</h2>
+                <p>API de canais de TV ao vivo funcionando perfeitamente. Acesse agora mesmo:</p>
+                
+                <div class="endpoint">
+                    <strong>Endpoint:</strong>
+                    <code>https://stream-api-mu.vercel.app/api</code>
+                </div>
+
+                <div id="stats" class="stats">
+                    <div class="stat">
+                        <span class="number">-</span>
+                        <span class="label">Canais</span>
+                    </div>
+                    <div class="stat">
+                        <span class="number">-</span>
+                        <span class="label">Atualizado</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card em-breve">
+                <span class="status soon">🚀 EM BREVE</span>
+                <h2>🎬 Filmes & Séries</h2>
+                <p>Estamos trabalhando para trazer uma experiência incrível com catálogo completo de filmes e séries.</p>
+                
+                <div class="endpoint">
+                    <strong>Endpoints em desenvolvimento:</strong>
+                    <code>https://stream-api-mu.vercel.app/api/filmes</code>
+                    <code>https://stream-api-mu.vercel.app/api/series</code>
+                </div>
+
+                <p style="margin-top: 15px; color: #FF9800; font-weight: bold;">
+                    ⏳ Disponível em breve!
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Stream API &copy; 2024 - Desenvolvido para a comunidade</p>
+    </div>
+
+    <script>
+        // Carrega estatísticas dos canais
+        async function loadStats() {
+            try {
+                const response = await fetch('/api');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.querySelector('#stats .stat:nth-child(1) .number').textContent = data.total;
+                    document.querySelector('#stats .stat:nth-child(2) .number').textContent = 'Agora';
+                }
+            } catch (error) {
+                console.log('Erro ao carregar estatísticas');
+            }
+        }
+
+        // Carrega as estatísticas quando a página abre
+        loadStats();
+    </script>
+</body>
+</html>
