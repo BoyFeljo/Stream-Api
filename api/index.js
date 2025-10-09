@@ -2,81 +2,10 @@
 const m3u_url = "http://fbld.link:80/get.php?username=17145909&password=49841687&type=m3u_plus&output=ts";
 
 let cache = { timestamp: 0, data: null };
-const CACHE_TTL = 24 * 60 * 60 * 1000;
-
-function parseM3UChannels(m3uContent) {
-  const lines = m3uContent.split(/\r?\n/);
-  const channels = [];
-  let current = null;
-
-  for (let line of lines) {
-    line = line.trim();
-    if (!line) continue;
-
-    if (line.startsWith("#EXTINF:")) {
-      let name = null;
-      let group = "Desconhecido";
-      let logo = null;
-
-      const nameMatch = line.match(/tvg-name="([^"]*)"/i);
-      if (nameMatch) name = nameMatch[1];
-
-      const groupMatch = line.match(/group-title="([^"]*)"/i);
-      if (groupMatch) group = groupMatch[1];
-
-      const logoMatch = line.match(/tvg-logo="([^"]*)"/i);
-      if (logoMatch) logo = logoMatch[1];
-
-      if (!name) {
-        const parts = line.split(",", 2);
-        name = parts[1] ? parts[1].trim() : "Sem nome";
-      }
-
-      current = { name, group, logo: logo || null };
-    } else if (line.startsWith("http")) {
-      if (!current) current = { name: line, group: "Desconhecido", logo: null };
-      current.url = line;
-      channels.push(current);
-      current = null;
-    }
-  }
-
-  const seen = new Set();
-  const clean = [];
-  for (const c of channels) {
-    if (!c.url) continue;
-    if (seen.has(c.url)) continue;
-    seen.add(c.url);
-    clean.push(c);
-  }
-
-  return clean;
-}
-
-function filterOnlyChannels(channels) {
-  const removeKeywords = [
-    "filme", "movie", "cinema", "film", 
-    "série", "serie", "series", "season", "temporada", "episódio", "episodio",
-    "mp4", "vod", "video on demand", "on demand"
-  ];
-
-  return channels.filter(channel => {
-    const name = channel.name.toLowerCase();
-    const group = channel.group.toLowerCase();
-    const url = channel.url.toLowerCase();
-
-    const shouldRemove = removeKeywords.some(keyword => 
-      name.includes(keyword) || 
-      group.includes(keyword) ||
-      url.includes(keyword)
-    );
-
-    const hasMP4 = url.includes('.mp4') || url.includes('type=mp4');
-    return !shouldRemove && !hasMP4;
-  });
-}
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutos para teste
 
 export default async function handler(req, res) {
+  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -88,49 +17,83 @@ export default async function handler(req, res) {
   try {
     const now = Date.now();
 
+    // Retorna cache se ainda válido
     if (cache.data && now - cache.timestamp < CACHE_TTL) {
       return res.status(200).json({
         success: true,
         total: cache.data.length,
-        channels: cache.data
+        channels: cache.data.slice(0, 10), // Apenas 10 para teste
+        message: "Em breve: Filmes e Séries!"
       });
     }
 
+    // Busca a M3U
     const response = await fetch(m3u_url);
     const text = await response.text();
 
-    if (!text || (!text.includes("#EXTM3U") && !text.includes("#EXTINF"))) {
+    if (!text) {
       return res.status(502).json({ 
         success: false,
-        error: "Conteúdo M3U inválido" 
+        error: "Não foi possível carregar a lista" 
       });
     }
 
-    const allChannels = parseM3UChannels(text);
-    const onlyChannels = filterOnlyChannels(allChannels);
+    // Parse simples da M3U
+    const channels = [];
+    const lines = text.split('\n');
+    let currentChannel = null;
 
-    onlyChannels.sort((a, b) => {
-      if (a.group !== b.group) {
-        return a.group.localeCompare(b.group);
+    for (const line of lines) {
+      const trimmed = line.trim();
+      
+      if (trimmed.startsWith('#EXTINF:')) {
+        const nameMatch = trimmed.match(/tvg-name="([^"]*)"/i);
+        const groupMatch = trimmed.match(/group-title="([^"]*)"/i);
+        const logoMatch = trimmed.match(/tvg-logo="([^"]*)"/i);
+        
+        const name = nameMatch ? nameMatch[1] : trimmed.split(',')[1] || 'Canal';
+        const group = groupMatch ? groupMatch[1] : 'Geral';
+        const logo = logoMatch ? logoMatch[1] : null;
+
+        currentChannel = { name, group, logo };
+      } 
+      else if (trimmed.startsWith('http') && currentChannel) {
+        currentChannel.url = trimmed;
+        
+        // Filtra apenas canais (remove filmes/séries)
+        const nameLower = currentChannel.name.toLowerCase();
+        const groupLower = currentChannel.group.toLowerCase();
+        
+        const isMovie = nameLower.includes('filme') || nameLower.includes('movie') || groupLower.includes('filme');
+        const isSeries = nameLower.includes('série') || nameLower.includes('serie') || groupLower.includes('série');
+        
+        if (!isMovie && !isSeries) {
+          channels.push(currentChannel);
+        }
+        
+        currentChannel = null;
       }
-      return a.name.localeCompare(b.name);
-    });
+    }
 
-    cache.data = onlyChannels;
+    // Atualiza cache
+    cache.data = channels;
     cache.timestamp = now;
 
+    // Retorna sucesso
     res.status(200).json({
       success: true,
-      total: onlyChannels.length,
+      total: channels.length,
+      channels: channels.slice(0, 10), // Apenas primeiros 10 para teste
       last_update: new Date().toISOString(),
-      channels: onlyChannels
+      message: "🎬 Filmes e Séries em breve!"
     });
 
   } catch (err) {
-    res.status(502).json({ 
+    console.error('Erro:', err);
+    res.status(500).json({ 
       success: false,
-      error: "Falha ao carregar canais",
-      details: err.message 
+      error: "Erro interno do servidor",
+      message: "Tente novamente em alguns instantes"
     });
   }
-    }
+}
