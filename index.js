@@ -1,11 +1,6 @@
 import express from 'express';
 import axios from 'axios';
 import nodeCron from 'node-cron';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -173,12 +168,18 @@ async function updateM3UList() {
         }
     } catch (error) {
         console.error('❌ Erro ao baixar lista M3U:', error.message);
+        
+        // Se já existir dados em cache, mantém eles
+        if (cache.get('m3u_data')) {
+            console.log('🔄 Mantendo dados em cache devido ao erro');
+            return cache.get('m3u_data');
+        }
         return null;
     }
 }
 
-// Agendar atualização automática a cada 24 horas
-nodeCron.schedule('0 0 */24 * * *', async () => {
+// Agendar atualização automática a cada 6 horas (Vercel tem limites)
+nodeCron.schedule('0 */6 * * *', async () => {
     console.log('🔄 Atualização automática da lista M3U...');
     await updateM3UList();
 });
@@ -187,8 +188,11 @@ nodeCron.schedule('0 0 */24 * * *', async () => {
 
 // Health check
 app.get('/', (req, res) => {
+    const data = cache.get('m3u_data');
     res.json({ 
-        message: 'API M3U Online 🚀',
+        message: '🚀 Stream API Online - M3U Processor',
+        status: data ? 'active' : 'loading',
+        lastUpdate: cache.get('last_update') || 'never',
         endpoints: {
             '/api/all': 'Todos os itens',
             '/api/filmes': 'Lista de filmes',
@@ -196,8 +200,10 @@ app.get('/', (req, res) => {
             '/api/canais': 'Lista de canais',
             '/api/categories': 'Categorias organizadas',
             '/api/update': 'Forçar atualização',
-            '/api/stats': 'Estatísticas'
-        }
+            '/api/stats': 'Estatísticas',
+            '/api/search?q=nome': 'Buscar por nome'
+        },
+        statistics: data ? data.metadata : null
     });
 });
 
@@ -294,7 +300,7 @@ app.get('/api/search', (req, res) => {
 
     const results = data.allItems.filter(item => 
         item.name.toLowerCase().includes(query) ||
-        item.group.toLowerCase().includes(query)
+        (item.group && item.group.toLowerCase().includes(query))
     );
 
     res.json({
@@ -349,18 +355,20 @@ app.get('/api/item/:id', (req, res) => {
 async function startServer() {
     try {
         // Tentar carregar a lista na inicialização
-        console.log('🚀 Iniciando API M3U...');
+        console.log('🚀 Iniciando Stream API na Vercel...');
         await updateM3UList();
         
         app.listen(PORT, () => {
-            console.log(`✅ API M3U rodando na porta ${PORT}`);
-            console.log(`📊 Endpoints disponíveis em http://localhost:${PORT}`);
-            console.log('🔄 Atualização automática agendada a cada 24 horas');
+            console.log(`✅ Stream API rodando na porta ${PORT}`);
+            console.log(`📊 Endpoints disponíveis em https://stream-api-mu.vercel.app`);
+            console.log('🔄 Atualização automática agendada a cada 6 horas');
         });
     } catch (error) {
         console.error('❌ Erro ao iniciar servidor:', error);
-        process.exit(1);
+        // Não sair do processo na Vercel
     }
 }
 
 startServer();
+
+export default app;
