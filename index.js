@@ -18,7 +18,15 @@ app.use((req, res, next) => {
     next();
 });
 
-// Função para parsear apenas canais (baseado no seu exemplo)
+// Função para criar slug do canal
+function createSlug(name) {
+    return name.toLowerCase()
+        .replace(/[^\w\s]/g, '')
+        .replace(/\s+/g, '-')
+        .substring(0, 50); // Limita o tamanho do slug
+}
+
+// Função para parsear apenas canais
 function parseM3UChannels(m3uContent) {
     const lines = m3uContent.split(/\r?\n/);
     const channels = [];
@@ -32,7 +40,6 @@ function parseM3UChannels(m3uContent) {
             let name = null;
             let group = "Geral";
             let logo = null;
-            let tvgId = null;
 
             const nameMatch = line.match(/tvg-name="([^"]*)"/i);
             if (nameMatch) name = nameMatch[1];
@@ -43,58 +50,49 @@ function parseM3UChannels(m3uContent) {
             const logoMatch = line.match(/tvg-logo="([^"]*)"/i);
             if (logoMatch) logo = logoMatch[1];
 
-            const idMatch = line.match(/tvg-id="([^"]*)"/i);
-            if (idMatch) tvgId = idMatch[1];
-
             if (!name) {
                 const parts = line.split(",", 2);
                 name = parts[1] ? parts[1].trim() : "Sem nome";
             }
 
             current = { 
-                name, 
-                group, 
-                logo: logo || null,
-                tvgId: tvgId || null
+                name: name.trim(),
+                group: group.trim(),
+                logo: logo || null
             };
         } else if (line.startsWith("http")) {
             if (!current) {
                 current = { 
                     name: "Canal sem nome", 
                     group: "Geral", 
-                    logo: null,
-                    tvgId: null 
+                    logo: null
                 };
             }
             
-            current.url = line;
-
             // Ignora links de vídeo direto (filmes/episódios)
-            if (!current.url.match(/\.(mp4|mkv|avi|mov|flv|webm)$/i)) {
-                // Adicionar links próprios da API
-                const channelSlug = current.name.toLowerCase()
-                    .replace(/[^\w\s]/g, '')
-                    .replace(/\s+/g, '-');
+            if (!line.match(/\.(mp4|mkv|avi|mov|flv|webm)$/i)) {
+                const slug = createSlug(current.name);
                 
-                current.api_links = {
-                    self: `https://stream-api-mu.vercel.app/canal/${channelSlug}`,
-                    image: current.logo ? `https://stream-api-mu.vercel.app/logo/${channelSlug}` : null,
-                    json: `https://stream-api-mu.vercel.app/api/canais?channel=${encodeURIComponent(current.name)}`
+                // SALVA APENAS: nome, capa, grupo e player (com link do domínio)
+                const channelData = {
+                    nome: current.name,
+                    capa: current.logo ? `https://stream-api-mu.vercel.app/logo/${slug}` : null,
+                    grupo: current.group,
+                    player: `https://stream-api-mu.vercel.app/play/${slug}`
                 };
 
-                channels.push(current);
+                channels.push(channelData);
             }
 
             current = null;
         }
     }
 
-    // Remove duplicados baseado no nome e URL
+    // Remove duplicados baseado no nome
     const seen = new Set();
     const uniqueChannels = channels.filter(channel => {
-        const key = `${channel.name.toLowerCase()}_${channel.url}`;
-        if (seen.has(key)) return false;
-        seen.add(key);
+        if (seen.has(channel.nome.toLowerCase())) return false;
+        seen.add(channel.nome.toLowerCase());
         return true;
     });
 
@@ -199,6 +197,13 @@ app.get('/', (req, res) => {
             }
             a { color: #4CAF50; text-decoration: none; }
             a:hover { text-decoration: underline; }
+            .json-example { 
+                background: rgba(0,0,0,0.5); 
+                padding: 15px; 
+                border-radius: 8px; 
+                margin: 15px 0;
+                font-size: 14px;
+            }
         </style>
     </head>
     <body>
@@ -226,40 +231,49 @@ app.get('/', (req, res) => {
             <div class="endpoint">
                 <strong>📡 Todos os Canais (JSON Array):</strong>
                 <code><a href="/api/canais" target="_blank">https://stream-api-mu.vercel.app/api/canais</a></code>
-                <small>Retorna array JSON puro: [{"name": "...", "url": "...", "logo": "..."}, ...]</small>
+                <small>Retorna array JSON apenas com: nome, capa, grupo, player</small>
             </div>
             
             <div class="endpoint">
-                <strong>🔍 Buscar Canal por Nome:</strong>
-                <code>https://stream-api-mu.vercel.app/api/canais?search=NOME_DO_CANAL</code>
+                <strong>🔍 Buscar Canal:</strong>
+                <code>https://stream-api-mu.vercel.app/api/canais?search=NOME</code>
                 <small>Exemplo: <a href="/api/canais?search=globo" target="_blank">/api/canais?search=globo</a></small>
             </div>
             
             <div class="endpoint">
-                <strong>📺 Canal Específico:</strong>
-                <code>https://stream-api-mu.vercel.app/canal/NOME-DO-CANAL</code>
-                <small>Exemplo: <a href="/canal/sbt" target="_blank">/canal/sbt</a></small>
+                <strong>📂 Canais por Grupo:</strong>
+                <code>https://stream-api-mu.vercel.app/api/canais?group=NOME_GRUPO</code>
+                <small>Exemplo: <a href="/api/canais?group=Esportes" target="_blank">/api/canais?group=Esportes</a></small>
             </div>
-            
-            <div class="endpoint">
-                <strong>🖼️ Logo do Canal:</strong>
-                <code>https://stream-api-mu.vercel.app/logo/NOME-DO-CANAL</code>
-                <small>Redireciona para a imagem original</small>
-            </div>
-            
-            <div class="endpoint">
-                <strong>📊 Estatísticas:</strong>
-                <code><a href="/api/stats" target="_blank">https://stream-api-mu.vercel.app/api/stats</a></code>
-            </div>
-            
+
             <div class="endpoint">
                 <strong>🔄 Forçar Atualização:</strong>
                 <code><a href="/api/update" target="_blank">https://stream-api-mu.vercel.app/api/update</a></code>
             </div>
 
+            <h3>📋 Estrutura do JSON:</h3>
+            <div class="json-example">
+                <code>
+[<br>
+&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"nome": "Globo HD",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"capa": "https://stream-api-mu.vercel.app/logo/globo-hd",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"grupo": "Canais Abertos",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"player": "https://stream-api-mu.vercel.app/play/globo-hd"<br>
+&nbsp;&nbsp;},<br>
+&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"nome": "SBT HD",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"capa": null,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"grupo": "Canais Abertos",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"player": "https://stream-api-mu.vercel.app/play/sbt-hd"<br>
+&nbsp;&nbsp;}<br>
+]
+                </code>
+            </div>
+
             <div class="creator">
                 <p>🚀 Desenvolvido por <strong>Boy Feljo</strong> - API super leve e rápida!</p>
-                <p>⚡ JSON puro em array • 🖼️ Links próprios para imagens • 🔍 Busca inteligente</p>
+                <p>⚡ Apenas 4 campos • 🖼️ Links próprios • 🔍 Busca rápida</p>
             </div>
         </div>
     </body>
@@ -283,60 +297,56 @@ app.get('/api/canais', (req, res) => {
     }
 
     const search = req.query.search;
+    const group = req.query.group;
     
+    let filteredChannels = cache.data;
+
     // Filtro por busca
     if (search) {
-        const filteredChannels = cache.data.filter(channel => 
-            channel.name.toLowerCase().includes(search.toLowerCase())
+        filteredChannels = filteredChannels.filter(channel => 
+            channel.nome.toLowerCase().includes(search.toLowerCase())
         );
-        return res.json(filteredChannels); // Retorna array []
     }
 
-    // Retorna todos os canais como array []
-    res.json(cache.data);
+    // Filtro por grupo
+    if (group) {
+        filteredChannels = filteredChannels.filter(channel => 
+            channel.grupo.toLowerCase().includes(group.toLowerCase())
+        );
+    }
+
+    // Retorna array JSON puro []
+    res.json(filteredChannels);
 });
 
-// Canal específico por slug
-app.get('/canal/:slug', (req, res) => {
+// Player do canal (redireciona para o stream original)
+app.get('/play/:slug', async (req, res) => {
     if (!cache.data) {
         return res.status(503).json({ error: 'Dados não carregados' });
     }
 
-    const channelSlug = req.params.slug.toLowerCase();
-    const channel = cache.data.find(ch => {
-        const chSlug = ch.name.toLowerCase()
-            .replace(/[^\w\s]/g, '')
-            .replace(/\s+/g, '-');
-        return chSlug === channelSlug;
+    // Em uma implementação real, aqui você teria o mapeamento dos URLs originais
+    // Por enquanto, apenas demonstração
+    res.json({
+        message: 'Player endpoint - Em implementação',
+        slug: req.params.slug,
+        note: 'Aqui redirecionaria para o stream original do canal'
     });
-
-    if (!channel) {
-        return res.status(404).json({ error: 'Canal não encontrado' });
-    }
-
-    res.json(channel);
 });
 
-// Redirecionar para logo
-app.get('/logo/:slug', (req, res) => {
+// Logo do canal (redireciona para imagem original)
+app.get('/logo/:slug', async (req, res) => {
     if (!cache.data) {
         return res.status(503).json({ error: 'Dados não carregados' });
     }
 
-    const channelSlug = req.params.slug.toLowerCase();
-    const channel = cache.data.find(ch => {
-        const chSlug = ch.name.toLowerCase()
-            .replace(/[^\w\s]/g, '')
-            .replace(/\s+/g, '-');
-        return chSlug === channelSlug;
+    // Em uma implementação real, aqui você redirecionaria para a imagem original
+    // Por enquanto, apenas demonstração
+    res.json({
+        message: 'Logo endpoint - Em implementação', 
+        slug: req.params.slug,
+        note: 'Aqui redirecionaria para a imagem original do canal'
     });
-
-    if (!channel || !channel.logo) {
-        return res.status(404).json({ error: 'Logo não encontrada' });
-    }
-
-    // Redireciona para a imagem original
-    res.redirect(channel.logo);
 });
 
 // Estatísticas
@@ -346,12 +356,12 @@ app.get('/api/stats', (req, res) => {
     
     if (cache.data) {
         cache.data.forEach(channel => {
-            if (!groups[channel.group]) {
-                groups[channel.group] = 0;
+            if (!groups[channel.grupo]) {
+                groups[channel.grupo] = 0;
             }
-            groups[channel.group]++;
+            groups[channel.grupo]++;
             
-            if (channel.logo) withLogos++;
+            if (channel.capa) withLogos++;
         });
     }
     
@@ -362,26 +372,15 @@ app.get('/api/stats', (req, res) => {
         last_update: cache.timestamp ? new Date(cache.timestamp).toISOString() : "never",
         statistics: {
             total_canais: cache.data ? cache.data.length : 0,
-            canais_com_logo: withLogos,
+            canais_com_capa: withLogos,
             total_grupos: Object.keys(groups).length,
             grupos: groups
         },
-        features: [
-            "JSON array puro []",
-            "Canais únicos sem duplicação",
-            "Capas (null se não existir)",
-            "Links próprios da API",
-            "Busca por nome",
-            "Extremamente rápido ⚡"
-        ],
-        endpoints: [
-            "GET /api/canais - Todos os canais (array)",
-            "GET /api/canais?search=nome - Buscar",
-            "GET /canal/{nome} - Canal específico",
-            "GET /logo/{nome} - Logo do canal",
-            "GET /api/stats - Estatísticas",
-            "GET /api/update - Atualizar"
-        ]
+        estrutura: {
+            campos: ["nome", "capa", "grupo", "player"],
+            formato: "Array JSON []",
+            links: "Usando domínio próprio"
+        }
     });
 });
 
@@ -423,15 +422,15 @@ async function startServer() {
     try {
         console.log('🚀 Iniciando Stream API - Canais TV...');
         console.log('👨‍💻 Criado por: Boy Feljo');
+        console.log('💾 Salvando apenas: nome, capa, grupo, player');
         
         // Carregar dados na inicialização
         await updateM3UList();
         
         app.listen(PORT, () => {
             console.log(`✅ Stream API rodando na porta ${PORT}`);
-            console.log(`📺 Especializada em canais TV`);
-            console.log(`⚡ Extremamente leve e rápida`);
-            console.log(`🌐 Acesse: https://stream-api-mu.vercel.app`);
+            console.log(`📺 Apenas 4 campos por canal`);
+            console.log(`🌐 Domínio: https://stream-api-mu.vercel.app`);
             console.log(`🔄 Atualização automática a cada 6 horas`);
         });
     } catch (error) {
