@@ -4,7 +4,7 @@ import axios from 'axios';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const M3U_URL = "http://brx.si/get.php?username=magnun&password=magnun10&type=m3u_plus";
+const M3U_URL = "http://asdns.lol/get.php?username=0118689&password=3451067&type=m3u_plus&output=ts";
 
 // Cache
 let cache = { timestamp: 0, data: null };
