@@ -468,29 +468,80 @@
         let filteredChannels = [];
         let currentCategory = 'all';
 
+        // Dados de exemplo (caso a API não funcione)
+        const sampleData = [
+            {
+                "name": "A&E FHD",
+                "group": "Canais | Variedades",
+                "logo": "http://www.fontedecanais.org/logos/canais/ae.png",
+                "url": "http://rteomi.xyz:80/0118689/3451067/804653"
+            },
+            {
+                "name": "Globo FHD",
+                "group": "Canais | Variedades",
+                "logo": "https://logodownload.org/wp-content/uploads/2017/04/tv-globo-logo-1.png",
+                "url": "http://rteomi.xyz:80/0118689/3451067/804654"
+            },
+            {
+                "name": "ESPN FHD",
+                "group": "Canais | Esportes",
+                "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/1200px-ESPN_wordmark.svg.png",
+                "url": "http://rteomi.xyz:80/0118689/3451067/804655"
+            },
+            {
+                "name": "HBO FHD",
+                "group": "Canais | Filmes",
+                "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/HBO_logo.svg/1200px-HBO_logo.svg.png",
+                "url": "http://rteomi.xyz:80/0118689/3451067/804656"
+            },
+            {
+                "name": "CNN Brasil",
+                "group": "Canais | Notícias",
+                "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/CNN.svg/1200px-CNN.svg.png",
+                "url": "http://rteomi.xyz:80/0118689/3451067/804657"
+            },
+            {
+                "name": "Cartoon Network",
+                "group": "Canais | Infantil",
+                "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Cartoon_Network_2010_logo.svg/1200px-Cartoon_Network_2010_logo.svg.png",
+                "url": "http://rteomi.xyz:80/0118689/3451067/804658"
+            }
+        ];
+
         // Inicialização
         document.addEventListener('DOMContentLoaded', () => {
             loadChannels();
             setupEventListeners();
         });
 
-        // Carregar canais da API
+        // Carregar canais
         async function loadChannels() {
             try {
+                // Tenta carregar da API
                 const response = await fetch('https://stream-lite-eta.vercel.app/');
-                channelsData = await response.json();
-                filteredChannels = [...channelsData];
-                renderChannels(channelsData);
-                updateChannelsCount(channelsData.length);
+                
+                if (!response.ok) {
+                    throw new Error('Erro na resposta da API');
+                }
+                
+                const data = await response.json();
+                
+                // Verifica se os dados são válidos
+                if (Array.isArray(data) && data.length > 0) {
+                    channelsData = data;
+                } else {
+                    throw new Error('Dados inválidos da API');
+                }
+                
             } catch (error) {
-                console.error('Erro ao carregar canais:', error);
-                channelsGrid.innerHTML = `
-                    <div class="no-results">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <p>Erro ao carregar os canais. Tente novamente mais tarde.</p>
-                    </div>
-                `;
+                console.error('Erro ao carregar da API, usando dados locais:', error);
+                // Usa dados de exemplo se a API falhar
+                channelsData = sampleData;
             }
+            
+            filteredChannels = [...channelsData];
+            renderChannels(channelsData);
+            updateChannelsCount(channelsData.length);
         }
 
         // Configurar event listeners
@@ -563,7 +614,7 @@
             channelsGrid.innerHTML = channels.map(channel => `
                 <div class="channel-card" data-url="${channel.url}">
                     <div class="channel-logo">
-                        <img src="${channel.logo}" alt="${channel.name}" onerror="this.src='https://via.placeholder.com/150x80/1a2332/4a9eff?text=${encodeURIComponent(channel.name)}'">
+                        <img src="${channel.logo}" alt="${channel.name}" onerror="this.onerror=null; this.src='https://via.placeholder.com/150x80/1a2332/4a9eff?text=${encodeURIComponent(channel.name.split(' ')[0])}'">
                     </div>
                     <div class="channel-info">
                         <div class="channel-name">${channel.name}</div>
@@ -597,4 +648,4 @@
         }
     </script>
 </body>
-</html>
+    </html>
