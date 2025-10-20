@@ -1,13 +1,16 @@
-// index.js — versão GitHub + Vercel ⚡ by Boy Feljo 🇲🇿
+import fetch from "node-fetch"; // Para Node.js ESM
 
-import fetch from "node-fetch"; // 👈 Adiciona isso no topo (para funcionar na Vercel)
+// ================= CONFIGURAÇÃO =================
 const m3u_url = "http://asdns.lol/get.php?username=0118689&password=3451067&type=m3u_plus&output=ts";
-const githubRepo = "BoyFeljo/Stream-Api";
-const githubPath = "public/cache.json";
-const CACHE_TTL = 3 * 24 * 60 * 60 * 1000;
+const githubRepo = "BoyFeljo/Stream-Api"; // Repositório GitHub
+const githubPath = "public/cache.json";   // Arquivo cache
+const CACHE_TTL = 3 * 24 * 60 * 60 * 1000; // 3 dias
+// ================================================
 
+// Cache na memória da instância Vercel
 let cache = { timestamp: 0, data: null };
 
+// Função: parse rápido de lista M3U
 function parseM3UChannels(m3uContent) {
   const lines = m3uContent.split(/\r?\n/);
   const channels = [];
@@ -34,6 +37,7 @@ function parseM3UChannels(m3uContent) {
   });
 }
 
+// Tenta carregar cache.json do GitHub
 async function fetchCacheFromGitHub() {
   try {
     const url = `https://raw.githubusercontent.com/${githubRepo}/main/${githubPath}`;
@@ -53,6 +57,7 @@ async function fetchCacheFromGitHub() {
   }
 }
 
+// Salva novo cache.json no GitHub
 async function saveCacheToGitHub(channels) {
   try {
     const url = `https://api.github.com/repos/${githubRepo}/contents/${githubPath}`;
@@ -83,10 +88,12 @@ async function saveCacheToGitHub(channels) {
   }
 }
 
+// Função principal — handler Vercel
 export default async function handler(req, res) {
   try {
     const now = Date.now();
 
+    // CORS
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -94,6 +101,7 @@ export default async function handler(req, res) {
 
     const q = req.query.q ? req.query.q.toLowerCase() : null;
 
+    // 1️⃣ Cache em memória
     if (cache.data && now - cache.timestamp < CACHE_TTL) {
       console.log("✅ Cache em memória ativo");
       const filtered = q
@@ -102,6 +110,7 @@ export default async function handler(req, res) {
       return res.status(200).json(filtered);
     }
 
+    // 2️⃣ Cache do GitHub
     const githubCache = await fetchCacheFromGitHub();
     if (githubCache) {
       cache = { timestamp: now, data: githubCache };
@@ -111,6 +120,7 @@ export default async function handler(req, res) {
       return res.status(200).json(filtered);
     }
 
+    // 3️⃣ Baixa M3U e atualiza cache
     console.log("⏳ Atualizando cache com nova M3U...");
     const response = await fetch(m3u_url, { cache: "no-store" });
     const text = await response.text();
@@ -135,4 +145,4 @@ export default async function handler(req, res) {
       details: err.message,
     });
   }
-    }
+          }
